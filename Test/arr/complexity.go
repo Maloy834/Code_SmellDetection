@@ -18,7 +18,6 @@ func complexity(fn *ast.FuncDecl) int {
 
 func (v *complexityVisitor) Visit(n ast.Node) ast.Visitor {
 
-
 	switch n := n.(type) {
 	case *ast.FuncDecl, *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt, *ast.CaseClause, *ast.CommClause:
 		v.Complexity++
@@ -27,10 +26,6 @@ func (v *complexityVisitor) Visit(n ast.Node) ast.Visitor {
 		if n.Op == token.LAND || n.Op == token.LOR {
 			v.Complexity++
 			// its a check
-
-
-
-
 
 		}
 	}

@@ -14,16 +14,17 @@ type Selector struct {
 
 func (s *Selector) toString() string {
 	return s.left + "." + s.right
+
 }
 
 type Selector_Visitor struct {
 	selectors []Selector
 }
 
-func findSelectorsFromMethod(fn *ast.FuncDecl)(Selector_Visitor)  {
- variables :=Selector_Visitor{}
- ast.Walk(&variables,fn.Body)
- return variables
+func findSelectorsFromMethod(fn *ast.FuncDecl) Selector_Visitor {
+	variables := Selector_Visitor{}
+	ast.Walk(&variables, fn.Body)
+	return variables
 }
 func (v *Selector_Visitor) Visit(n ast.Node) ast.Visitor {
 	if n == nil {
@@ -51,16 +52,30 @@ func (v *Selector_Visitor) Visit(n ast.Node) ast.Visitor {
 }
 
 func (v *Selector_Visitor) add(s Selector) {
+	//println("Before Check: "+s.left+" "+"  "+s.right)
 	if !v.exists(s) {
+		//println("After Check: "+s.left+" "+"  "+s.right)
 		v.selectors = append(v.selectors, s)
+		//println(len(v.selectors))
 	}
+
 }
 
 func (v *Selector_Visitor) exists(s Selector) bool {
+	//println(len(v.selectors))
 	for _, n := range v.selectors {
+		//println(len(v.selectors))
+		/*println(n.left+" "+s.left+" "+n.right+"  "+s.right+ "")
+		println(len(n.left))
+		println(len(s.left))
+		println(len(n.right))
+		println(len(s.right))*/
 		if n.left == s.left && n.right == s.right {
+			//println("check")
+			//println(s.left+" "+"  "+s.right)
 			return true
 		}
 	}
+	//println(s.left+" "+"  "+s.right)
 	return false
 }

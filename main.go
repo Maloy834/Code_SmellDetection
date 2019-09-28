@@ -12,9 +12,9 @@ import (
 )
 
 func main() {
-	reader:= bufio.NewReader(os.Stdin)
+	reader := bufio.NewReader(os.Stdin)
 	var fileName string
-	fmt.Fscan(reader,&fileName)
+	fmt.Fscan(reader, &fileName)
 
 	files, err := Unzip(fileName, "output-folder")
 	if err != nil {
@@ -38,7 +38,7 @@ func Unzip(src string, dest string) ([]string, error) {
 		return filenames, err
 	}
 	defer readfile.Close()
-    //println("debug")
+	//println("debug")
 	for _, f := range readfile.File {
 
 		// Store filename/path for returning and using later on
@@ -84,27 +84,33 @@ func Unzip(src string, dest string) ([]string, error) {
 	}
 	return filenames, nil
 }
-func  ReadAllfiles(file []string)  {
+func ReadAllfiles(file []string) {
 
- for i:=0;i<len(file);i++{
- 	//if os.Stat(file[i])
- 	f,err :=os.Stat(file[i])
+	for i := 0; i < len(file); i++ {
+		//if os.Stat(file[i])
+		f, err := os.Stat(file[i])
 
-	 if err != nil {
-		 log.Fatal(err)
-	 }
-	 if f.IsDir() == false && filepath.Ext(file[i])==".go" {
-		  structs, methods :=parseFile(file[i])
-		 checklongParameterInMethod(methods,file[i])
-		 for _, mlist := range methods {
-			 for i, c := range structs {
-				 if mlist.PkgName == c.PkgName && mlist.StructName == c.StructName {
-					 structs[i].addMethod(mlist)
-				 }
-			 }
-		 }
+		if err != nil {
+			log.Fatal(err)
+		}
+		if f.IsDir() == false && filepath.Ext(file[i]) == ".go" {
+			structs, methods := parseFile(file[i])
+			for _, mlist := range methods {
+				for i, c := range structs {
+					if mlist.PkgName == c.PkgName && mlist.StructName == c.StructName {
+						structs[i].addMethod(mlist)
+						//println(mlist.FuncName)
+					}
+				}
+			}
+			/* for _,r := range methods{
 
-	 }
+				 	println("Methods: ",r.FuncName)
 
- }
+			 }*/
+			checklongParameterInMethod(methods, file[i])
+
+		}
+
+	}
 }
