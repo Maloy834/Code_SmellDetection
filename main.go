@@ -99,17 +99,21 @@ func ReadAllfiles(file []string) {
 				for i, c := range structs {
 					if mlist.PkgName == c.PkgName && mlist.StructName == c.StructName {
 						structs[i].addMethod(mlist)
-						//println(mlist.FuncName)
+
 					}
 				}
 			}
-			/* for _,r := range methods{
-
-				 	println("Methods: ",r.FuncName)
-
-			 }*/
-			checklongParameterInMethod(methods, file[i])
-
+			for i, st := range structs {
+				st.NDC = calculateNDC(st)
+				st.NP = calculateNP(st)
+				st.WMC = calculateWMC(st)
+				st.ATFD = calculateATFD(st)
+				st.TCC = calculateTCC(st)
+				st.GodStruct = checkGodStruct(st)
+				structs[i] = st
+			}
+			checkMethodExtract(methods, file[i])
+			CheckStructMatrix(structs)
 		}
 
 	}

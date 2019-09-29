@@ -45,9 +45,9 @@ func findMethodsfromFile(fset *token.FileSet, node *ast.File, fileName string) [
 		if !ok {
 			continue
 		}
-		if fn.Recv == nil || fn.Recv.List[0].Names == nil {
+		/*if fn.Recv == nil || fn.Recv.List[0].Names == nil {
 			continue
-		}
+		}*/
 
 		structName, funcName := funcName(fn)
 		var params []variable
@@ -61,21 +61,32 @@ func findMethodsfromFile(fset *token.FileSet, node *ast.File, fileName string) [
 			}
 			params = append(params, temp)
 		}
-		receivers := variable{
-			name:    fn.Recv.List[0].Names[0].Name,
-			varType: recvString(fn.Recv.List[0].Type),
+		receivers := variable{}
+		if fn.Recv == nil || fn.Recv.List[0].Names == nil {
+			receivers.name = ""
+			receivers.varType = ""
+			/*receivers := variable{
+				name:    fn.Recv.List[0].Names[0].Name,
+				varType: recvString(fn.Recv.List[0].Type),
+			}*/
+		} else {
+
+			receivers.name = fn.Recv.List[0].Names[0].Name
+			receivers.varType = recvString(fn.Recv.List[0].Type)
 		}
+
 		func_visitor := visitor{}
 		//selectors :=Selector_Visitor{}
+		//ast.Walk(&selectors, fn.Body)
 		varAll := findSelectorsFromMethod(fn)
 		for i, n := range varAll.selectors {
 			varAll.selectors[i].line = findLine(fileName, fset.Position(n.pos).Line)
 		}
-		for i := range varAll.selectors {
+		/*for i := range varAll.selectors {
 			println("----------Selecotrs")
 			println(funcName)
 			println("Selecotrs left: " + varAll.selectors[i].left + " Selecotrs right: " + varAll.selectors[i].right)
-		}
+		}*/
 		switch node_type := decl.(type) {
 		case *ast.FuncDecl:
 
@@ -135,7 +146,7 @@ func funcName(fn *ast.FuncDecl) (string, string) {
 			// return fmt.Sprintf("(%s).%s", recvString(typ), fn.Name)
 		}
 	}
-	return "", fn.Name.Name
+	return " ", fn.Name.Name
 }
 func countComments(file *ast.File, fn *ast.FuncDecl) int {
 	var comments []*ast.CommentGroup
