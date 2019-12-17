@@ -3,24 +3,29 @@ package main
 import (
 	"go/ast"
 	"go/token"
+	"path/filepath"
 )
 
 type Struct struct {
 	PkgName    string
 	StructName string
+	FileName   string
 	Attributes []variable
 	Methods    []Method // How many method use this struct
+	Totalmethods []Method // All methods in the file
 	Pos        token.Position
 	WMC        int
 	NDC        int
 	NP         int
 	ATFD       int
 	TCC        float64
+	LCOM	   int
 	GodStruct  bool
+	DataStruct bool
 	DemiGod    bool
 }
 
-func findStructsfromFile(fset *token.FileSet, node *ast.File) []Struct {
+func findStructsfromFile(fset *token.FileSet, node *ast.File,fileName string) []Struct {
 	var structs []Struct
 	packageName := node.Name.Name
 	findStructs := func(node ast.Node) bool {
@@ -52,6 +57,7 @@ func findStructsfromFile(fset *token.FileSet, node *ast.File) []Struct {
 			PkgName:    packageName,
 			StructName: structName,
 			Attributes: attributes,
+			FileName: filepath.Base(fileName),
 			Pos:        fset.Position(st.Pos()),
 		}
 

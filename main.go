@@ -2,7 +2,7 @@ package main
 
 import (
 	"archive/zip"
-	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -12,9 +12,12 @@ import (
 )
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
+	//reader := bufio.NewReader(os.Stdin)
 	var fileName string
-	fmt.Fscan(reader, &fileName)
+	flag.StringVar(&fileName, "file", "", "Usage")
+
+	flag.Parse()
+	//fmt.Fscan(reader, &fileName)
 
 	files, err := Unzip(fileName, "output-folder")
 	if err != nil {
@@ -22,7 +25,7 @@ func main() {
 	}
 
 	//fmt.Println("Unzipped:\n" + strings.Join(files, "\n"))
-	ReadAllfiles(files)
+	ReadAllfiles(files,fileName)
 	os.RemoveAll("output-folder")
 }
 
@@ -40,11 +43,7 @@ func Unzip(src string, dest string) ([]string, error) {
 	defer readfile.Close()
 	//println("debug")
 	for _, f := range readfile.File {
-
-		// Store filename/path for returning and using later on
 		fpath := filepath.Join(dest, f.Name)
-
-		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
 		if !strings.HasPrefix(fpath, filepath.Clean(dest)+string(os.PathSeparator)) {
 			return filenames, fmt.Errorf("%s: illegal file path", fpath)
 		}
@@ -84,8 +83,9 @@ func Unzip(src string, dest string) ([]string, error) {
 	}
 	return filenames, nil
 }
-func ReadAllfiles(file []string) {
-
+func ReadAllfiles(file []string,projectName string) {
+	var all_struct []Struct
+	var all_method [] Method
 	for i := 0; i < len(file); i++ {
 		//if os.Stat(file[i])
 		f, err := os.Stat(file[i])
@@ -95,26 +95,61 @@ func ReadAllfiles(file []string) {
 		}
 		if f.IsDir() == false && filepath.Ext(file[i]) == ".go" {
 			structs, methods := parseFile(file[i])
+			/*for _,st:= range structs{
+				all_struct=append(all_struct,st)
+			}*/
+			//all_struct=append(all_struct,structs)
+			//println(len(structs))
 			for _, mlist := range methods {
 				for i, c := range structs {
+					//structs[i].addAllMethods(methods)
+					structs[i].Totalmethods = methods
 					if mlist.PkgName == c.PkgName && mlist.StructName == c.StructName {
-						structs[i].addMethod(mlist)
-
+						structs[i].addUsedMethod(mlist)
+						//structs[i].Totalmethods = methods
 					}
 				}
 			}
-			for i, st := range structs {
-				st.NDC = calculateNDC(st)
-				st.NP = calculateNP(st)
-				st.WMC = calculateWMC(st)
-				st.ATFD = calculateATFD(st)
-				st.TCC = calculateTCC(st)
-				st.GodStruct = checkGodStruct(st)
-				structs[i] = st
+			for _, st := range structs {
+
+				all_struct = append(all_struct, st)
 			}
-			checkMethodExtract(methods, file[i])
-			CheckStructMatrix(structs)
+			for _, mt := range methods {
+				all_method = append(all_method, mt)
+			}
+
+
 		}
 
 	}
+	for i, st := range all_struct {
+		st.NDC = calculateNDC(st)
+		st.NP = calculateNP(st)
+		st.ATFD = calculateATFD(st)
+		st.TCC = calculateTCC(st)
+		st.WMC = calculateWMC(st.Methods)
+		st.ATFD = calculateATFD(st)
+		st.TCC = calculateTCC(st)
+		st.LCOM= calculateLCOM(st,st.Methods)
+		st.GodStruct = checkGodStruct(st)
+		//st.DataStruct=checkDataStruct(st)
+		all_struct[i] = st
+	}
+
+	for j,m := range all_method{
+		m.calculateCallerMethod(all_method)
+		//println(m.FuncName,"  ",m.CM,"" ,m.CC)
+		m.FDP=calculateFDP(all_struct,m)
+		m.FeatureEnvy=checkFeatureEnvy(m)
+		m.ShortGunSurgery=checkShortGunSurgery(m)
+		m.BrainMethod=checkBrainMethod(m)
+		m.LongParameter=checkLongParameter(m)
+		all_method[j]=m
+	}
+
+	analyseStruct(all_struct,projectName)
+	analyseMethods(all_method,projectName)
+	writeCodeSmellSumarry(all_struct,all_method,projectName)
+	writeCodeSmellList(all_struct,all_method,projectName)
+	//checkMethodExtract(methods, file[i],structs)
 }

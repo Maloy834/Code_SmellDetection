@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"go/ast"
+	"go/token"
 	"os"
 	"strings"
 )
@@ -14,6 +15,11 @@ type variable struct {
 	varType string
 	count   int
 }
+type method_visitor struct{
+	methodName string
+
+}
+
 
 func isDir(filename string) bool {
 	fi, err := os.Stat(filename)
@@ -101,9 +107,9 @@ func isVariable(line string, leftVar string, rightVar string) bool {
 			}
 		}
 
-		if pos = strings.Index(line, " "); pos == -1 {
+		/*if pos = strings.Index(line, " "); pos == -1 {
 			break
-		}
+		}*/
 
 		line = line[pos+1:]
 	}
@@ -114,7 +120,70 @@ func isVariable(line string, leftVar string, rightVar string) bool {
 type uniqeSelectors struct {
 	selectors []Selector
 }
+type uniqueFileName struct{
+	fileName [] string
+}
+type uniqueStruct struct {
+	structs [] Struct
+	//stName [] string
+}
+type VariableDeclare struct {
+	var_type string
+	pos token.Pos
+	name  string
 
+}
+type variable_visitor struct {
+	vardeclare [] VariableDeclare
+}
+func findVariableDeclaration(fn *ast.FuncDecl) variable_visitor{
+	node_visitor := variable_visitor{}
+	ast.Walk(&node_visitor,fn.Body)
+	return node_visitor
+}
+func (node_visitor *variable_visitor) Visit(node ast.Node) ast.Visitor {
+	if node == nil {
+		return node_visitor
+	}
+	switch node:=node.(type) {
+	case *ast.GenDecl:
+		for _, spec := range node.Specs {
+			switch spec := spec.(type) {
+
+			case *ast.ValueSpec:
+				for _, id := range spec.Names {
+					newVariable:= VariableDeclare{
+						name:id.Name,
+						pos:id.Pos(),
+					}
+					node_visitor.addVariableDeclare(newVariable)
+				}
+
+			}
+		}
+
+	}
+	return node_visitor
+}
+func (sv * variable_visitor)addVariableDeclare(s VariableDeclare)  {
+	sv.vardeclare=append(sv.vardeclare,s)
+}
+ func containsVariable(value string, attributes[] variable) bool{
+    for _,var_name:= range attributes{
+    	if var_name.name==value{
+    		return true
+		}
+	}
+ 	return false
+ }
+ func (u *uniqueStruct) existStruct(st Struct) bool{
+ 	for _,v := range u.structs{
+ 		if v.StructName== st.StructName{
+			return true
+		}
+	}
+	return false
+ }
 func (u *uniqeSelectors) exists(s Selector) bool {
 	for _, v := range u.selectors {
 		// println("WKAALAKLKA", v.toString(), s.toString)
@@ -124,7 +193,80 @@ func (u *uniqeSelectors) exists(s Selector) bool {
 	}
 	return false
 }
+func (u *uniqueStruct) addStruct(st Struct){
+	u.structs=append(u.structs,st)
+}
+func (u *uniqueFileName)addFileName(name string){
+	u.fileName=append(u.fileName,name)
+}
+func (u *uniqueFileName) existFilename(name string) bool{
+	for _,v := range u.fileName{
+		if v == name{
+			return true
+		}
+	}
+	return false
+}
 
 func (u *uniqeSelectors) add(s Selector) {
 	u.selectors = append(u.selectors, s)
+}
+func checkMethodCalling(stmts []ast.Stmt) [] method_visitor{
+	var mVisitor [] method_visitor
+	for _, stmt := range stmts {
+		if exprStmt, ok := stmt.(*ast.ExprStmt); ok {
+			if call, ok := exprStmt.X.(*ast.CallExpr); ok {
+				if fun, ok := call.Fun.(*ast.SelectorExpr); ok {
+					//println( fun.Sel.Name)
+					newMethodVisitor:= method_visitor{
+						methodName:   fun.Sel.Name,
+
+					}
+					mVisitor=append(mVisitor,newMethodVisitor)
+
+				}else{
+					if tr, ok := call.Fun.(*ast.Ident); ok {
+						new_MethodVisitor:= method_visitor{
+							methodName:   tr.Name,
+
+						}
+						mVisitor=append(mVisitor,new_MethodVisitor)
+					}
+				}
+			}
+		}
+	}
+	return mVisitor
+}
+func findMethodStruct(structs[] Struct,value string) string {
+	for _,st:= range structs{
+		if value==st.StructName{
+			return st.StructName
+		}
+
+	}
+	return ""
+}
+func (m * Method)calculateCallerMethod(methods [] Method)  {
+	cm:=0
+	//ustruct:= uniqueStruct{}
+	ustruct:=uniqueFileName{}
+	for _,mt:= range methods{
+		for _,callerMt:= range mt.funcCalling{
+			//println(callerMt.methodName,"   trr ",m.FuncName)
+			if callerMt.methodName== m.FuncName{
+				cm++
+				/*if m.StructName!="" && m.StructName!= mt.StructName && !ustruct.existStructame(m.StructName){
+					ustruct.addStructName(m.StructName)
+				}*/
+				if m.FileName!= mt.FileName && !ustruct.existFilename(m.FileName){
+					//println(m.FileName,"  debug  ", mt.FileName)
+					ustruct.addFileName(m.FileName)
+				}
+			}
+		}
+	}
+	cc:= len(ustruct.fileName)
+	m.CM=cm
+	m.CC=cc
 }

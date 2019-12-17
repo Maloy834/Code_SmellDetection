@@ -5,8 +5,13 @@ import (
 	"go/token"
 	"log"
 )
-func (st *Struct) addMethod(method Method) {
+func (st *Struct) addUsedMethod(method Method) {
 	st.Methods = append(st.Methods, method)
+}
+func (st *Struct) addAllMethods(method []Method) {
+	for _,m := range method {
+		st.Totalmethods = append(st.Totalmethods, m)
+	}
 }
 
 func parseFile(fileName string)([]Struct,[]Method)  {
@@ -17,8 +22,8 @@ func parseFile(fileName string)([]Struct,[]Method)  {
 	if err != nil {
 		log.Fatal(err)
 	}
-	structs = findStructsfromFile(fset, node)
-	methods = findMethodsfromFile(fset, node, fileName)
+	structs = findStructsfromFile(fset, node,fileName)
+	methods = findMethodsfromFile(fset, node, fileName,structs)
 
 	return structs,methods
 }

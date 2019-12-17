@@ -2,5 +2,23 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/Masterminds/semver" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/andlabs/ui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/fatih/color" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/jackmordaunt/icns" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/kennygrant/sanitize" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/leaanthony/mewn" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/leaanthony/slicer" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/leaanthony/spinner" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/leaanthony/synx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/leaanthony/wincursor" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/mattn/go-isatty" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/mitchellh/go-homedir" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/nfnt/resize" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/pkg/browser" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/pkg/errors" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/github.com/wailsapp/wails" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/golang.org/x/net" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/golang.org/x/sys" vcs="Git" />
   </component>
 </project>

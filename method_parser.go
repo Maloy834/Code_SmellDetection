@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -17,22 +18,37 @@ type visitor struct {
 }
 
 type Method struct {
-	PkgName           string
-	StructName        string
-	FuncName          string
-	Complexity        int
-	Comments          int
-	BlankLines        int
-	LLOC              int
-	Receiver          variable
-	Parameters        []variable
-	Selectors         []Selector
-	SelfVarAccessed   []Selector
-	OthersVarAccessed []Selector
-	Pos               token.Position
+	PkgName           		string
+	StructName        		string
+	FuncName          		string
+	FileName                string
+	Complexity        		int
+	Comments         		int
+	BlankLines        		int
+	LLOC              		int
+	MAXNESTING				int
+	ATFD			  		int
+	RatioLOCAndComplexity 	float64
+	FDP				  		int
+	NOAV			  		int
+	LAA				  		float64
+	funcCalling				[]method_visitor
+	CM                      int
+	CC						int
+	isExported				bool
+	FeatureEnvy				bool
+	BrainMethod             bool
+	LongParameter           bool
+	ShortGunSurgery         bool
+	Receiver          		variable
+	Parameters        		[]variable
+	Selectors         		[]Selector
+	SelfVarAccessed   		[]Selector
+	OthersVarAccessed 		[]Selector
+	Pos               		token.Position
 }
 
-func findMethodsfromFile(fset *token.FileSet, node *ast.File, fileName string) []Method {
+func findMethodsfromFile(fset *token.FileSet, node *ast.File, fileName string,structs [] Struct) []Method {
 
 	var methods []Method
 	/*fset := token.NewFileSet();
@@ -79,6 +95,15 @@ func findMethodsfromFile(fset *token.FileSet, node *ast.File, fileName string) [
 		//selectors :=Selector_Visitor{}
 		//ast.Walk(&selectors, fn.Body)
 		varAll := findSelectorsFromMethod(fn)
+		varType := findVariableDeclaration(fn)
+		funcCallingAll:=checkMethodCalling(fn.Body.List)
+		for i,n:=range varType.vardeclare{
+
+			varType.vardeclare[i].var_type=findVarType(fileName,fset.Position(n.pos).Line,fset.Position(n.pos).Line,varType.vardeclare[i].name)
+			if structName==""{
+				structName=findMethodStruct(structs,varType.vardeclare[i].var_type)
+			}
+		}
 		for i, n := range varAll.selectors {
 			varAll.selectors[i].line = findLine(fileName, fset.Position(n.pos).Line)
 		}
@@ -98,24 +123,50 @@ func findMethodsfromFile(fset *token.FileSet, node *ast.File, fileName string) [
 				log.Fatal(err)
 			}
 			func_visitor.numOfEmptyStatements = line
-			func_visitor.LLOC = (fset.Position(fn.End()).Line) - (fset.Position(fn.Pos()).Line) - 1 - func_visitor.numOfEmptyStatements - func_visitor.numOfComments
+			func_visitor.LLOC = (fset.Position(fn.End()).Line) - (fset.Position(fn.Pos()).Line) - 1-func_visitor.numOfEmptyStatements - func_visitor.numOfComments
+			if func_visitor.LLOC<=0{
+				func_visitor.LLOC=1
+			}
 
 		}
 		method := Method{
 			PkgName:    node.Name.Name,
 			StructName: structName,
 			FuncName:   funcName,
+			FileName: filepath.Base(fileName),
 			Receiver:   receivers,
+			funcCalling:funcCallingAll,
 			Parameters: params,
 			Selectors:  varAll.selectors,
 			Complexity: method_complexity(fn),
-			//LLOC: logical_Line_of_Code(fn),
+			MAXNESTING:calculateMethodNesting(node,fn),
 			Comments:   func_visitor.numOfComments,
 			BlankLines: func_visitor.numOfEmptyStatements,
 			LLOC:       func_visitor.LLOC,
 			Pos:        fset.Position(fn.Pos()),
 		}
+		if fn.Name.IsExported() == true {
+			method.isExported = true
+		} else {
+			method.isExported = false
+		}
 		method.separateAccessedVariable()
+		method.claculateMethodATFD()
+		method.calculateMethodLAA()
+		method.NOAV=len(method.SelfVarAccessed)+len(method.OthersVarAccessed)
+		//method.calculateFDP()
+		//println(method.Complexity/method.LLOC)
+		//var t= method.Complexity
+		//var m= method.LLOC
+		//var n float64
+		//n =float64(t)/float64(m)
+		//r:=strconv.FormatFloat(n, 'f', -1, 64)
+		/*println(t," ", m)
+		println(r)*/
+		method.RatioLOCAndComplexity=float64(method.Complexity)/float64(method.LLOC)
+		// s:=fmt.Sprintf("%.12f",method.RatioLOCAndComplexity)
+		// println(s)
+		//io.WriteString(os.Stdout, s)
 		methods = append(methods, method)
 		/*println(methods[0].FuncName)
 		println(len(methods[0].Parameters))*/
@@ -124,6 +175,8 @@ func findMethodsfromFile(fset *token.FileSet, node *ast.File, fileName string) [
 }
 func (m *Method) separateAccessedVariable() {
 	for _, s := range m.Selectors {
+		//println(m.FuncName, " ",s.left,"  ",s.exported)
+
 		if !isVariable(s.line, s.left, s.right) {
 			continue
 		}
@@ -187,5 +240,35 @@ func countEmptyStatements(fileName string, start int, end int) (int, error) {
 
 	}
 	return emptylines, nil
+
+}
+func findVarType(fileName string, start int, end int,value string) string {
+	varType := ""
+	//println(start," ",end)
+	f, err := os.Open(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+
+	for l := 0; l < start-1; l++ {
+		scanner.Scan()
+	}
+	for t := start; t <= end; t++ {
+		scanner.Scan()
+		line := scanner.Text()
+		line = strings.Trim(line, " ")
+		line = strings.TrimSpace(line)
+		//count blanklines annd only bracket
+		indx:= strings.Index(line,value)
+		varType= line[indx+1:]
+		varType = strings.TrimSpace(varType)
+
+
+
+	}
+
+	return varType
 
 }

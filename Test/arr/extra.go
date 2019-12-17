@@ -1,16 +1,18 @@
 package main
 
-import "fmt"
-
-func sum(x  int,y int,z int) {
-
-	total :=x+y+z
-	fmt.Println(total)
+type sumation struct {
+	total int
+}
+func (s* sumation)sum(x  int,y int,z int) {
+   // s := sumation{}
+	s.total =x+y+z
+   println(s.total)
 }
 func main() {
-
-
-
-	sum(1, 2, 3)
+	s := sumation{}
+	col:=complexityVisitor{}
+	col.Complexity=5
+	col.Count=3
+	s.sum(1, 2, 3)
 
 }

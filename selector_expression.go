@@ -8,6 +8,8 @@ import (
 type Selector struct {
 	left  string
 	right string
+	exported bool
+	st_name interface{}
 	pos   token.Pos
 	line  string
 }
@@ -42,8 +44,11 @@ func (v *Selector_Visitor) Visit(n ast.Node) ast.Visitor {
 				newSelector := Selector{
 					left:  va.Name,
 					right: selectorExp.Sel.Name,
+					exported:va.IsExported(),
+					//st_name:selectorExp.Sel.Obj.Name,
 					pos:   va.Pos(),
 				}
+				//println(newSelector.st_name)
 				v.add(newSelector)
 			}
 		}
